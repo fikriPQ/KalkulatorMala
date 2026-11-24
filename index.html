@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalkulator Scientific</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Chivo+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: a precise, tactile desk tool — confident, no fuss.
+IDEA: a scientific desktop calculator: graphite body, LCD, function keys above the number pad, paper tape beside it.
+PICTURE: the calculator itself, large, with the tape roll of past sums next to it.
+COLOUR and TYPE: graphite body, bone keys, hot orange operators, a cool blue for the 2nd layer; Outfit for keys, Chivo Mono for digits.
+LAYOUT: modest title, then calculator + tape side by side; stacks to calculator then tape below 820px.
+*/
+:root{color-scheme:light dark;
+--bg:light-dark(#ece8e0,#121315);--ink:light-dark(#1b1c1f,#ecebe7);--muted:light-dark(#6b6a66,#9a9993);
+--body:light-dark(#2a2d33,#1f2226);--bodyEdge:light-dark(#3b3f47,#30343a);
+--key:light-dark(#f4f1ea,#3a3e45);--keyInk:light-dark(#1b1c1f,#f1efe9);--keyShade:light-dark(#c9c3b6,#25282d);
+--fn:light-dark(#c9c4b9,#5a5f68);--fnShade:light-dark(#9f998c,#3c4047);
+--sci:#40454e;--sciShade:#2a2e34;--sciInk:#ecebe6;
+--op:#ff6a2b;--opShade:#c44a17;--second:#5cb4ff;--lcd:#c9d3bf;--lcdInk:#1d241b;
+--paper:light-dark(#fffdf8,#f2efe7);--paperInk:#24231f}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Outfit,system-ui,sans-serif;overflow-x:clip;min-height:100vh}
+.band{padding:clamp(24px,4vw,56px) max(5vw,16px);max-width:1120px;margin:0 auto}
+h1{font-size:clamp(32px,5vw,46px);line-height:1.05;margin:0 0 6px;font-weight:700;text-wrap:balance}
+.lede{margin:0 0 28px;color:var(--muted);max-width:62ch}
+.desk{display:grid;grid-template-columns:minmax(0,460px) minmax(0,1fr);gap:clamp(20px,3vw,40px);align-items:start}
+.calc{background:linear-gradient(160deg,var(--bodyEdge),var(--body) 40%);border-radius:28px;padding:22px;box-shadow:0 2px 0 rgba(255,255,255,.08) inset,0 30px 50px -20px rgba(0,0,0,.45),0 8px 16px -8px rgba(0,0,0,.4)}
+.brand{display:flex;justify-content:space-between;align-items:center;color:#b9bcc2;font-size:13px;margin:0 4px 12px}
+.brand b{font-weight:600;color:#e7e4dc}
+.solar{display:flex;gap:2px}.solar i{width:14px;height:14px;background:#3a2f2a;border-radius:2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+.lcd{background:linear-gradient(180deg,#d6dfcc,var(--lcd));color:var(--lcdInk);border-radius:12px;padding:12px 16px 12px;box-shadow:inset 0 3px 8px rgba(0,0,0,.28);font-family:"Chivo Mono",ui-monospace,monospace;margin-bottom:16px}
+.ind{display:flex;gap:12px;font-size:13px;min-height:18px}
+.ind span{opacity:.16}.ind span.on{opacity:.95}
+.expr{font-size:16px;min-height:24px;text-align:right;overflow-wrap:anywhere;opacity:.75}
+.out{font-size:clamp(32px,8.5vw,50px);line-height:1.1;text-align:right;white-space:nowrap;overflow-x:auto;scrollbar-width:none;font-weight:500;letter-spacing:-.02em}
+.out::-webkit-scrollbar{display:none}
+.out.err{font-size:28px}
+.sci{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.keys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.k{font:600 20px/1 Outfit,system-ui,sans-serif;min-height:56px;border:0;border-radius:14px;background:var(--key);color:var(--keyInk);box-shadow:0 4px 0 var(--keyShade);cursor:pointer;transition:transform .06s,box-shadow .06s;touch-action:manipulation;padding:0 2px}
+.k:active,.k.hit{transform:translateY(3px);box-shadow:0 1px 0 var(--keyShade)}
+.k:focus-visible{outline:3px solid #6fb6ff;outline-offset:2px}
+.k.fn{background:var(--fn);box-shadow:0 4px 0 var(--fnShade);font-size:17px}
+.k.fn:active,.k.fn.hit{box-shadow:0 1px 0 var(--fnShade)}
+.k.op{background:var(--op);color:#fff;box-shadow:0 4px 0 var(--opShade);font-size:24px}
+.k.op:active,.k.op.hit{box-shadow:0 1px 0 var(--opShade)}
+.k.s{min-height:44px;font-size:15px;font-weight:500;border-radius:11px;background:var(--sci);color:var(--sciInk);box-shadow:0 3px 0 var(--sciShade)}
+.k.s:active,.k.s.hit{transform:translateY(2px);box-shadow:0 1px 0 var(--sciShade)}
+.k.s.alt{color:var(--second)}
+.k.s.mem{background:transparent;box-shadow:inset 0 0 0 1.5px #4b5059;color:#d9d6ce}
+.k.s.mem:active,.k.s.mem.hit{box-shadow:inset 0 0 0 1.5px #8a8f98}
+.k.s.toggle.on{background:var(--second);color:#0e2233;box-shadow:0 3px 0 #2d7fc4}
+.k sup{font-size:.68em;line-height:0}
+.tape{position:relative}
+.tapehead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+.tapehead h2{font-size:20px;margin:0;font-weight:600}
+.tbtn{font:500 15px Outfit,sans-serif;min-height:44px;padding:0 14px;border-radius:10px;border:1.5px solid color-mix(in srgb,var(--ink) 25%,transparent);background:transparent;color:var(--ink);cursor:pointer}
+.tbtn:focus-visible{outline:3px solid #6fb6ff;outline-offset:2px}
+.roll{background:var(--paper);color:var(--paperInk);border-radius:6px 6px 0 0;padding:6px 20px 26px;min-height:300px;max-height:600px;overflow-y:auto;font-family:"Chivo Mono",ui-monospace,monospace;font-size:15px;box-shadow:0 18px 30px -18px rgba(0,0,0,.35);
+-webkit-mask:linear-gradient(#000 calc(100% - 14px),transparent);mask:linear-gradient(#000 calc(100% - 14px),transparent)}
+.row{display:block;width:100%;text-align:right;border:0;background:none;color:inherit;font:inherit;padding:10px 0 9px;border-bottom:1px dashed #d6cfbf;cursor:pointer;border-radius:4px}
+.row:hover,.row:focus-visible{background:#fff3e6;outline:none}
+.row .e{display:block;color:#77736a;font-size:14px;overflow-wrap:anywhere}
+.row .r{display:block;font-size:19px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .r::before{content:"= ";color:var(--op)}
+.empty{color:#8b877d;text-align:center;padding:60px 10px;font-family:Outfit,sans-serif}
+.hint{color:var(--muted);font-size:14px;margin:14px 0 0}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:15px;opacity:0;transition:.2s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%)}
+kbd{font:500 13px "Chivo Mono",monospace;padding:1px 6px;border-radius:5px;border:1px solid color-mix(in srgb,var(--ink) 25%,transparent)}
+@media(max-width:820px){.desk{grid-template-columns:minmax(0,1fr)}.calc{max-width:480px;width:100%;margin:0 auto}.roll{min-height:180px;max-height:340px}}
+@media(max-width:400px){.calc{padding:14px;border-radius:22px}.sci{gap:6px}.keys{gap:8px}.k{min-height:52px}.k.s{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.k,.toast{transition:none}}
+</style>
+</head>
+<body>
+<main class="band">
+  <h1>Kalkulator Scientific</h1>
+  <p class="lede">Trigonometri, logaritma, pangkat, akar, dan faktorial, dengan mode derajat atau radian. Tekan <b>2nd</b> untuk fungsi kebalikan. Setiap hasil tercetak di gulungan riwayat; klik untuk memakainya lagi.</p>
+  <div class="desk">
+    <section class="calc" aria-label="Kalkulator scientific">
+      <div class="brand"><b>HITUNG-12 SX</b><div class="solar" aria-hidden="true"><i></i><i></i><i></i><i></i></div></div>
+      <div class="lcd" aria-live="polite">
+        <div class="ind" aria-hidden="true"><span id="i2">2nd</span><span id="iA" class="on">DEG</span><span id="iM">M</span><span id="iP">( )</span><span id="iE">E</span></div>
+        <div class="expr" id="expr"></div>
+        <div class="out" id="out">0</div>
+      </div>
+      <div class="sci" id="sci"></div>
+      <div class="keys" id="keys">
+        <button class="k fn" data-a="ac" id="kAC">AC</button>
+        <button class="k fn" data-a="back" aria-label="Hapus satu">⌫</button>
+        <button class="k fn" data-a="%">%</button>
+        <button class="k op" data-a="/" aria-label="Bagi">÷</button>
+        <button class="k" data-a="7">7</button><button class="k" data-a="8">8</button><button class="k" data-a="9">9</button>
+        <button class="k op" data-a="*" aria-label="Kali">×</button>
+        <button class="k" data-a="4">4</button><button class="k" data-a="5">5</button><button class="k" data-a="6">6</button>
+        <button class="k op" data-a="-" aria-label="Kurang">−</button>
+        <button class="k" data-a="1">1</button><button class="k" data-a="2">2</button><button class="k" data-a="3">3</button>
+        <button class="k op" data-a="+" aria-label="Tambah">+</button>
+        <button class="k fn" data-a="neg" aria-label="Ganti tanda">±</button>
+        <button class="k" data-a="0">0</button>
+        <button class="k" data-a="." aria-label="Koma desimal">,</button>
+        <button class="k op" data-a="=" aria-label="Sama dengan">=</button>
+      </div>
+    </section>
+    <section class="tape" aria-label="Riwayat perhitungan">
+      <div class="tapehead">
+        <h2>Gulungan riwayat</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="tbtn" id="copy">Salin hasil</button>
+          <button class="tbtn" id="clear">Hapus riwayat</button>
+        </div>
+      </div>
+      <div class="roll" id="roll"></div>
+      <p class="hint">Fungsi (sin, log, x², n!, dst.) bekerja pada angka di layar, atau pada isi kurung tepat sebelumnya — misalnya <kbd>(</kbd> 30 + 15 <kbd>)</kbd> lalu <b>sin</b>. Keyboard: angka, <kbd>+ − * /</kbd>, <kbd>^</kbd> pangkat, <kbd>!</kbd> faktorial, <kbd>( )</kbd>, <kbd>Enter</kbd>, <kbd>Backspace</kbd>, <kbd>Esc</kbd>.</p>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+{
+const $=id=>document.getElementById(id);
+const exprEl=$('expr'),outEl=$('out'),rollEl=$('roll'),toastEl=$('toast'),sciEl=$('sci');
+
+// Scientific keys: [action, label, 2nd action, 2nd label, extra class]
+const SCI=[
+  ['second','2nd',null,null,'toggle'],['angle','DEG',null,null,''],['mc','MC',null,null,'mem'],['mr','MR',null,null,'mem'],['m+','M+','m-','M−','mem'],
+  ['sin','sin','asin','sin<sup>−1</sup>'],['cos','cos','acos','cos<sup>−1</sup>'],['tan','tan','atan','tan<sup>−1</sup>'],['ln','ln','exp','e<sup>x</sup>'],['log','log','pow10','10<sup>x</sup>'],
+  ['sq','x<sup>2</sup>','cube','x<sup>3</sup>'],['^','x<sup>y</sup>','r','<sup>y</sup>√x'],['sqrt','√x','cbrt','∛x'],['fact','n!','abs','|x|'],['inv','1/x','rand','Rand'],
+  ['pi','π',null,null],['e','e',null,null],['(','(',null,null],[')',')',null,null],['ans','Ans',null,null]
+];
+let second=false,deg=true;
+function drawSci(){
+  sciEl.innerHTML=SCI.map(([a,l,a2,l2,c])=>{
+    const use2=second&&a2;const act=use2?a2:a;
+    let lab=use2?l2:l;if(a==='angle')lab=deg?'DEG':'RAD';
+    const cls='k s '+(c||'')+(use2?' alt':'')+(a==='second'&&second?' on':'');
+    return `<button class="${cls}" data-a="${act}">${lab}</button>`;
+  }).join('');
+}
+
+const OPS={'+':1,'-':1,'*':2,'/':2,'^':3,'r':3};
+const RIGHT={'^':1,'r':1};
+const SYM={'+':' + ','-':' − ','*':' × ','/':' ÷ ','^':'^','r':' ʸ√ '};
+let tokens=[];        // number tokens are "value" or "value|label"
+let cur='',curLab=''; // number being typed; label if it came from a function/constant
+let justEval=false,lastResult=0,ans=0,memory=0,history=[];
+
+try{history=JSON.parse(localStorage.getItem('sci-hist')||'[]');memory=+localStorage.getItem('sci-mem')||0;deg=localStorage.getItem('sci-deg')!=='0'}catch(e){}
+const save=()=>{try{localStorage.setItem('sci-hist',JSON.stringify(history.slice(0,100)));localStorage.setItem('sci-mem',String(memory));localStorage.setItem('sci-deg',deg?'1':'0')}catch(e){}};
+
+const fmt=n=>{
+  if(typeof n!=='number'||!isFinite(n))return 'Error';
+  if(n!==0&&(Math.abs(n)>=1e15||Math.abs(n)<1e-9))return n.toExponential(9).replace(/\.?0+e/,'e').replace('.',',');
+  return parseFloat(n.toPrecision(14)).toLocaleString('id-ID',{maximumFractionDigits:10});
+};
+const fmtTyped=s=>{
+  if(s===''||s==='-')return s||'0';
+  if(/e/i.test(s))return fmt(parseFloat(s));
+  const neg=s.startsWith('-'),b=neg?s.slice(1):s;const [i,d]=b.split('.');
+  return (neg?'-':'')+(+i||0).toLocaleString('id-ID')+(d!==undefined?','+d:'');
+};
+const isNum=t=>t!==undefined&&!(t in OPS)&&t!=='('&&t!==')';
+const tokText=t=>{if(SYM[t])return SYM[t];if(t==='('||t===')')return t;const [v,l]=t.split('|');return l||fmtTyped(v)};
+const openCount=()=>tokens.reduce((a,t)=>a+(t==='(')-(t===')'),0);
+const hasCur=()=>cur!==''&&cur!=='-';
+const curTok=()=>cur+(curLab?'|'+curLab:'');
+
+const clean=x=>{if(!isFinite(x))return NaN;if(Math.abs(x)<1e-13)return 0;return parseFloat(x.toPrecision(15))};
+function gamma(z){ // Lanczos
+  if(z<0.5)return Math.PI/(Math.sin(Math.PI*z)*gamma(1-z));
+  const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  z-=1;let x=c[0];for(let i=1;i<g+2;i++)x+=c[i]/(z+i);const t=z+g+0.5;
+  return Math.sqrt(2*Math.PI)*Math.pow(t,z+0.5)*Math.exp(-t)*x;
+}
+function power(a,b){
+  if(a<0&&!Number.isInteger(b)){const inv=1/b;if(Number.isInteger(inv)&&Math.abs(inv)%2===1)return -Math.pow(-a,b);return NaN}
+  return Math.pow(a,b);
+}
+function evaluate(list){
+  const out=[],st=[];
+  for(const t of list){
+    if(isNum(t))out.push(parseFloat(t));
+    else if(t in OPS){while(st.length&&st.at(-1) in OPS&&(RIGHT[t]?OPS[st.at(-1)]>OPS[t]:OPS[st.at(-1)]>=OPS[t]))out.push(st.pop());st.push(t)}
+    else if(t==='(')st.push(t);
+    else if(t===')'){while(st.length&&st.at(-1)!=='(')out.push(st.pop());st.pop()}
+  }
+  while(st.length){const o=st.pop();if(o!=='(')out.push(o)}
+  const s=[];
+  for(const t of out){
+    if(typeof t==='number'){s.push(t);continue}
+    const b=s.pop(),a=s.pop();if(a===undefined||b===undefined)throw 0;
+    s.push(t==='+'?a+b:t==='-'?a-b:t==='*'?a*b:t==='/'?(b===0?NaN:a/b):t==='^'?power(a,b):(b===0?NaN:power(a,1/b)));
+  }
+  if(s.length!==1)throw 0;return s[0];
+}
+function fullList(){
+  const l=[...tokens];if(hasCur())l.push(curTok());
+  while(l.length&&(l.at(-1) in OPS||l.at(-1)==='('))l.pop();
+  let o=l.reduce((a,t)=>a+(t==='(')-(t===')'),0);while(o-->0)l.push(')');
+  return l;
+}
+function commit(){if(hasCur())tokens.push(curTok());cur='';curLab=''}
+function implicitMul(){if(tokens.at(-1)===')')tokens.push('*')}
+
+function render(){
+  if(!justEval)exprEl.textContent=tokens.map(tokText).join('')+(curLab?curLab:'');
+  let show;
+  if(hasCur()||cur==='-')show=fmtTyped(cur);
+  else if(justEval)show=fmt(lastResult);
+  else{try{const l=fullList();show=l.length?fmt(evaluate(l)):'0'}catch(e){show='0'}}
+  outEl.textContent=show;outEl.classList.toggle('err',show==='Error');
+  outEl.scrollLeft=outEl.scrollWidth;
+  $('i2').classList.toggle('on',second);
+  $('iA').textContent=deg?'DEG':'RAD';
+  $('iM').classList.toggle('on',memory!==0);
+  $('iP').classList.toggle('on',openCount()>0);
+  $('iE').classList.toggle('on',show==='Error');
+  $('kAC').textContent=(hasCur()||tokens.length)&&!justEval?'C':'AC';
+}
+function currentValue(){
+  if(hasCur())return parseFloat(cur);
+  if(justEval)return lastResult;
+  try{return evaluate(fullList())}catch(e){return 0}
+}
+function startFresh(){if(justEval){tokens=[];cur='';curLab='';justEval=false;exprEl.textContent=''}}
+function setCur(v,lab){if(!isFinite(v)){showErr();return}cur=String(parseFloat(v.toPrecision(15)));curLab=lab||'';justEval=false}
+function showErr(){tokens=[];cur='';curLab='';justEval=true;lastResult=NaN;exprEl.textContent='';toast('Error: di luar domain fungsi')}
+
+const wrap=s=>/^[\d.,\-]+$|^[πe]$|^\(.*\)$|^\w+\(.*\)$/.test(s)&&!/^-/.test(s)?s:'('+s+')';
+const toRad=x=>deg?x*Math.PI/180:x, fromRad=x=>deg?x*180/Math.PI:x;
+const UN={
+  sin:[x=>{if(deg&&x%180===0)return 0;return Math.sin(toRad(x))},s=>'sin('+s+')'],
+  cos:[x=>{if(deg&&(x-90)%180===0)return 0;return Math.cos(toRad(x))},s=>'cos('+s+')'],
+  tan:[x=>{if(deg&&(x-90)%180===0)return NaN;if(deg&&x%180===0)return 0;return Math.tan(toRad(x))},s=>'tan('+s+')'],
+  asin:[x=>Math.abs(x)>1?NaN:fromRad(Math.asin(x)),s=>'sin⁻¹('+s+')'],
+  acos:[x=>Math.abs(x)>1?NaN:fromRad(Math.acos(x)),s=>'cos⁻¹('+s+')'],
+  atan:[x=>fromRad(Math.atan(x)),s=>'tan⁻¹('+s+')'],
+  ln:[x=>x<=0?NaN:Math.log(x),s=>'ln('+s+')'],
+  log:[x=>x<=0?NaN:Math.log10(x),s=>'log('+s+')'],
+  exp:[x=>Math.exp(x),s=>'e^'+wrap(s)],
+  pow10:[x=>Math.pow(10,x),s=>'10^'+wrap(s)],
+  sq:[x=>x*x,s=>wrap(s)+'²'],
+  cube:[x=>x*x*x,s=>wrap(s)+'³'],
+  sqrt:[x=>x<0?NaN:Math.sqrt(x),s=>'√'+wrap(s)],
+  cbrt:[x=>Math.cbrt(x),s=>'∛'+wrap(s)],
+  fact:[x=>{if(x<0&&Number.isInteger(x))return NaN;if(x>170)return Infinity;if(Number.isInteger(x)){let r=1;for(let i=2;i<=x;i++)r*=i;return r}return gamma(x+1)},s=>wrap(s)+'!'],
+  abs:[x=>Math.abs(x),s=>'abs('+s+')'],
+  inv:[x=>x===0?NaN:1/x,s=>'1/'+wrap(s)]
+};
+function applyUnary(name){
+  const [f,lab]=UN[name];
+  let v,inner;
+  if(hasCur()){v=parseFloat(cur);inner=curLab||fmtTyped(cur)}
+  else if(justEval){if(!isFinite(lastResult))return;v=lastResult;inner=fmt(lastResult);tokens=[];justEval=false;exprEl.textContent=''}
+  else if(tokens.at(-1)===')'){
+    let d=0,i=tokens.length-1;for(;i>=0;i--){if(tokens[i]===')')d++;else if(tokens[i]==='('&&--d===0)break}
+    const sub=tokens.slice(i+1,-1);try{v=evaluate(sub)}catch(e){return}
+    inner=sub.map(tokText).join('');tokens=tokens.slice(0,i);
+  }else return;
+  const r=clean(f(v));
+  if(!isFinite(r)){showErr();return}
+  setCur(r,lab(inner));
+}
+function insertConst(v,lab){startFresh();if(hasCur()&&curLab===''){commit();tokens.push('*')}else if(hasCur()){commit();tokens.push('*')}else implicitMul();setCur(v,lab)}
+
+function press(a){
+  if(/^\d$/.test(a)){
+    startFresh();if(curLab){commit();tokens.push('*')}implicitMul();
+    if(cur.replace('-','').length>=15)return;
+    cur=(cur==='0'?'':cur==='-0'?'-':cur)+a;
+  }else if(a==='.'){
+    startFresh();if(curLab){commit();tokens.push('*')}implicitMul();
+    if(!cur.includes('.'))cur=(cur===''||cur==='-'?cur+'0':cur)+'.';
+  }else if(a in OPS){
+    if(justEval){if(!isFinite(lastResult))return;tokens=[String(lastResult)+'|'+fmt(lastResult)];cur='';curLab='';justEval=false}
+    if(cur==='-'&&a!=='-')return;
+    commit();
+    const last=tokens.at(-1);
+    if(last===undefined||last==='('){if(a==='-')cur='-'}
+    else if(last in OPS){if(a==='-'&&last!=='+'&&last!=='-')cur='-';else tokens[tokens.length-1]=a}
+    else tokens.push(a);
+  }else if(a==='('){
+    startFresh();if(hasCur()){commit();tokens.push('*')}else implicitMul();
+    if(cur==='-'){cur='';tokens.push('-1','*')}
+    tokens.push('(');
+  }else if(a===')'){
+    if(openCount()>0&&(hasCur()||tokens.at(-1)===')')){commit();tokens.push(')')}
+  }else if(a==='='){
+    if(justEval)return;
+    const l=fullList();if(!l.length)return;
+    let r;try{r=clean(evaluate(l))}catch(e){r=NaN}
+    const text=l.map(tokText).join('');
+    tokens=[];cur='';curLab='';justEval=true;lastResult=r;exprEl.textContent=text+' =';
+    if(isFinite(r)){ans=r;history.unshift({e:text,r});save();drawRoll()}else toast('Error: perhitungan tidak terdefinisi');
+  }else if(a==='ac'){
+    if($('kAC').textContent==='C'&&(cur!=='')){cur='';curLab=''}else{tokens=[];cur='';curLab='';justEval=false;exprEl.textContent=''}
+  }else if(a==='back'){
+    if(justEval){justEval=false;tokens=[];cur='';curLab='';exprEl.textContent=''}
+    else if(curLab){cur='';curLab=''}
+    else if(cur!=='')cur=cur.slice(0,-1);
+    else{const t=tokens.pop();if(isNum(t)){const [v,l]=t.split('|');if(!l)cur=v.slice(0,-1)}}
+  }else if(a==='neg'){
+    if(justEval){setCur(-lastResult);exprEl.textContent='';tokens=[]}
+    else if(curLab){setCur(-parseFloat(cur),'−'+wrap(curLab))}
+    else if(cur==='')cur='-';else cur=cur.startsWith('-')?cur.slice(1):'-'+cur;
+  }else if(a==='%'){
+    let v=currentValue();
+    if(hasCur()&&!justEval){
+      const op=tokens.at(-1),base=tokens.slice(0,-1);
+      let b=null;try{if((op==='+'||op==='-')&&base.length)b=evaluate(base)}catch(e){}
+      setCur(b!==null?b*v/100:v/100,(curLab||fmtTyped(cur))+'%');
+    }else{startFresh();tokens=[];setCur(v/100)}
+  }else if(UN[a]){applyUnary(a)}
+  else if(a==='pi')insertConst(Math.PI,'π');
+  else if(a==='e')insertConst(Math.E,'e');
+  else if(a==='ans')insertConst(ans,'Ans');
+  else if(a==='rand')insertConst(Math.random(),'');
+  else if(a==='second'){second=!second;drawSci()}
+  else if(a==='angle'){deg=!deg;save();drawSci();toast(deg?'Mode derajat (DEG)':'Mode radian (RAD)')}
+  else if(a==='mc'){memory=0;save()}
+  else if(a==='mr')insertConst(memory,'M');
+  else if(a==='m+'||a==='m-'){const v=currentValue();if(isFinite(v)){memory=parseFloat((memory+(a==='m+'?v:-v)).toPrecision(14));save();toast('Memori: '+fmt(memory))}}
+  if(second&&!['second','angle','mc','mr'].includes(a)&&!/^\d$/.test(a)&&SCI.some(k=>k[2]===a)){second=false;drawSci()}
+  render();
+}
+
+function drawRoll(){
+  rollEl.innerHTML=history.length?history.map((h,i)=>`<button class="row" data-i="${i}" title="Pakai hasil ini"><span class="e"></span><span class="r"></span></button>`).join(''):'<div class="empty">Belum ada perhitungan.<br>Hasil akan tercetak di sini.</div>';
+  rollEl.querySelectorAll('.row').forEach(b=>{const h=history[+b.dataset.i];b.querySelector('.e').textContent=h.e;b.querySelector('.r').textContent=fmt(h.r)});
+}
+let tt;function toast(m){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>toastEl.classList.remove('show'),1600)}
+
+const onKey=e=>{const b=e.target.closest('.k');if(b)press(b.dataset.a)};
+$('keys').addEventListener('click',onKey);sciEl.addEventListener('click',onKey);
+rollEl.addEventListener('click',e=>{
+  const b=e.target.closest('.row');if(!b)return;const h=history[+b.dataset.i];
+  insertConst(h.r,'');render();toast('Hasil dipakai: '+fmt(h.r));
+});
+$('clear').addEventListener('click',()=>{history=[];save();drawRoll();toast('Riwayat dihapus')});
+$('copy').addEventListener('click',async()=>{
+  const t=outEl.textContent;try{await navigator.clipboard.writeText(t);toast('Disalin: '+t)}catch(e){toast('Tidak bisa menyalin di sini')}
+});
+const KEYMAP={Enter:'=','=':'=',Escape:'ac',Delete:'ac',Backspace:'back',',':'.','.':'.','x':'*','X':'*','÷':'/','!':'fact'};
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  const a=KEYMAP[e.key]||e.key;
+  if(!(/^\d$/.test(a)||a in OPS&&a!=='r'||['=','ac','back','.','%','(',')','fact'].includes(a)))return;
+  e.preventDefault();press(a);
+  const btn=document.querySelector(`.k[data-a="${CSS.escape(a)}"]`);
+  if(btn){btn.classList.add('hit');setTimeout(()=>btn.classList.remove('hit'),90)}
+});
+drawSci();drawRoll();render();
+}
+</script>
+</body>
+</html>
